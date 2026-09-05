@@ -1,17 +1,17 @@
-from tools.change_parser import parse_code_change
+from pathlib import Path
 from tools.file_editor import write_file
 
 
 def apply_code_change(
     repo_path: str,
-    generated_response: str
+    file_path: str,
+    code: str
 ):
-    change = parse_code_change(generated_response)
+    repo = Path(repo_path).resolve()
+    target = (repo / file_path).resolve()
 
-    result = write_file(
+    return write_file(
         repo_path,
-        change["file"],
-        change["code"]
+        str(target),
+        code
     )
-
-    return result
