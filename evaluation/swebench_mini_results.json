@@ -1,0 +1,109 @@
+[
+  {
+    "instance_id": "MINI-001",
+    "bug_id": "BUG-001",
+    "problem_statement": "User email is not stored when a User object is created.",
+    "target_file": "patch_fixture.py",
+    "test_file": "test_patch_fixture.py",
+    "expected_behavior": "The User object should store the provided email.",
+    "expected_result": "success",
+    "actual_result": "success",
+    "steps": 5,
+    "tests_before": {
+      "passed": 2,
+      "failed": 1
+    },
+    "tests_after": {
+      "passed": 3,
+      "failed": 0
+    },
+    "tools_used": [
+      "list_files",
+      "run_tests",
+      "read_file",
+      "apply_patch",
+      "run_tests"
+    ]
+  },
+  {
+    "instance_id": "MINI-002",
+    "bug_id": "BUG-002",
+    "problem_statement": "calculate_total returns only the price instead of price multiplied by quantity.",
+    "target_file": "bug_return.py",
+    "test_file": "test_bug_return.py",
+    "expected_behavior": "calculate_total should return price multiplied by quantity.",
+    "expected_result": "success",
+    "actual_result": "success",
+    "steps": 6,
+    "tests_before": {
+      "passed": 3,
+      "failed": 1
+    },
+    "tests_after": {
+      "passed": 4,
+      "failed": 0
+    },
+    "tools_used": [
+      "list_files",
+      "run_tests",
+      "read_file",
+      "read_file",
+      "apply_patch",
+      "run_tests"
+    ]
+  },
+  {
+    "instance_id": "MINI-003",
+    "bug_id": "BUG-003",
+    "problem_statement": "Member users are not receiving the required 10 percent discount.",
+    "target_file": "bug_discount.py",
+    "test_file": "test_bug_discount.py",
+    "expected_behavior": "Members should receive a 10 percent discount.",
+    "expected_result": "success",
+    "actual_result": "success",
+    "steps": 6,
+    "tests_before": {
+      "passed": 5,
+      "failed": 1
+    },
+    "tests_after": {
+      "passed": 6,
+      "failed": 0
+    },
+    "tools_used": [
+      "list_files",
+      "run_tests",
+      "read_file",
+      "read_file",
+      "apply_patch",
+      "run_tests"
+    ]
+  },
+  {
+    "instance_id": "MINI-004",
+    "bug_id": "BUG-004",
+    "problem_statement": "The divide function does not handle division by zero.",
+    "target_file": "bug_failure.py",
+    "test_file": "test_bug_failure.py",
+    "expected_behavior": "Division by zero should be handled safely.",
+    "expected_result": "failure",
+    "actual_result": "failure",
+    "steps": 6,
+    "tests_before": {
+      "passed": 1,
+      "failed": 1
+    },
+    "tests_after": {
+      "passed": 1,
+      "failed": 1
+    },
+    "tools_used": [
+      "list_files",
+      "read_file",
+      "search_repository",
+      "list_files",
+      "read_file",
+      "search_repository"
+    ]
+  }
+]

@@ -40,9 +40,9 @@ def index_repository(repo_path: str):
     ).tolist()
 
     ids = [
-        f"chunk_{i}"
-        for i in range(len(chunks))
-    ]
+    f"{repo_path}_{i}"
+    for i in range(len(chunks))
+]
 
     documents = [
         chunk["content"]
@@ -50,13 +50,14 @@ def index_repository(repo_path: str):
     ]
 
     metadatas = [
-        {
-            "file": chunk["file"],
-            "start_line": chunk["start_line"],
-            "end_line": chunk["end_line"]
-        }
-        for chunk in chunks
-    ]
+    {
+        "file": chunk["file"],
+        "start_line": chunk["start_line"],
+        "end_line": chunk["end_line"],
+        "repo_path": str(repo_path)
+    }
+    for chunk in chunks
+]
 
     collection.upsert(
         ids=ids,
@@ -80,9 +81,12 @@ def search_repository(
     ).tolist()
 
     results = collection.query(
-        query_embeddings=query_embedding,
-        n_results=top_k * 3
-    )
+    query_embeddings=query_embedding,
+    n_results=top_k * 3,
+    where={
+        "repo_path": str(repo_path)
+    }
+)
 
     semantic_results = []
 

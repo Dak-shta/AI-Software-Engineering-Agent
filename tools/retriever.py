@@ -8,6 +8,7 @@ def keyword_scores(repo_path: str, query: str):
     scores = {}
 
     for file in files:
+
         content = read_file(file)
 
         if content is None:

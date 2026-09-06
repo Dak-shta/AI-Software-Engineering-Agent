@@ -1,0 +1,140 @@
+[
+  {
+    "bug_id": "BUG-001",
+    "description": "User email value was not stored correctly.",
+    "tests_before": {
+      "passed": 0,
+      "failed": 1,
+      "returncode": 1
+    },
+    "tests_after": {
+      "passed": 1,
+      "failed": 0,
+      "returncode": 0
+    },
+    "tools_used": [
+      "list_files",
+      "read_file",
+      "apply_patch",
+      "run_tests"
+    ],
+    "steps": 5,
+    "agent_completed": true,
+    "success": true
+  },
+  {
+    "bug_id": "BUG-002",
+    "description": "Function returned price instead of price multiplied by quantity.",
+    "tests_before": {
+      "passed": 0,
+      "failed": 1,
+      "returncode": 1
+    },
+    "tests_after": {
+      "passed": 1,
+      "failed": 0,
+      "returncode": 0
+    },
+    "tools_used": [
+      "list_files",
+      "run_tests",
+      "read_file",
+      "apply_patch"
+    ],
+    "steps": 6,
+    "agent_completed": true,
+    "success": true
+  },
+  {
+    "bug_id": "BUG-003",
+    "description": "Member discount was not applied correctly.",
+    "tests_before": {
+      "passed": 1,
+      "failed": 1,
+      "returncode": 1
+    },
+    "tests_after": {
+      "passed": 2,
+      "failed": 0,
+      "returncode": 0
+    },
+    "tools_used": [
+      "list_files",
+      "run_tests",
+      "read_file",
+      "apply_patch"
+    ],
+    "steps": 6,
+    "agent_completed": false,
+    "success": true
+  },
+  {
+    "bug_id": "BUG-004",
+    "description": "Division by zero is not handled.",
+    "tests_before": {
+      "passed": 1,
+      "failed": 1,
+      "returncode": 1
+    },
+    "tests_after": {
+      "passed": 2,
+      "failed": 0,
+      "returncode": 0
+    },
+    "tools_used": [
+      "list_files",
+      "run_tests",
+      "read_file",
+      "apply_patch"
+    ],
+    "steps": 6,
+    "agent_completed": true,
+    "success": true
+  },
+  {
+    "bug_id": "BUG-005",
+    "description": "Area calculation calls an undefined function instead of calculating length multiplied by width.",
+    "tests_before": {
+      "passed": 0,
+      "failed": 1,
+      "returncode": 1
+    },
+    "tests_after": {
+      "passed": 1,
+      "failed": 0,
+      "returncode": 0
+    },
+    "tools_used": [
+      "list_files",
+      "read_file",
+      "apply_patch",
+      "run_tests"
+    ],
+    "steps": 6,
+    "agent_completed": true,
+    "success": true
+  },
+  {
+    "bug_id": "BUG-006",
+    "description": "Function returns the user's name instead of the user's email.",
+    "tests_before": {
+      "passed": 0,
+      "failed": 1,
+      "returncode": 1
+    },
+    "tests_after": {
+      "passed": 1,
+      "failed": 0,
+      "returncode": 0
+    },
+    "tools_used": [
+      "list_files",
+      "run_tests",
+      "read_file",
+      "apply_patch"
+    ],
+    "steps": 6,
+    "agent_completed": true,
+    "success": true
+  }
+]

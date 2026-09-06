@@ -224,3 +224,38 @@ Additional limitations include:
 The next stage is to replace prompt-based tool selection with native function/tool calling and introduce a safer patch-based modification mechanism.
 
 The resulting system will then be evaluated on multiple software repair tasks using quantitative metrics such as repair success rate, test pass rate, tool calls, and repair iterations.
+## Safer Patch-Based Repair
+
+### Motivation
+
+The initial implementation allowed the agent to replace an entire
+source file. Although functional, full-file replacement can
+introduce unintended modifications.
+
+To reduce this risk, a targeted patch mechanism was implemented.
+
+### Patch Mechanism
+
+The agent now provides:
+
+- target repository
+- target file
+- exact old code
+- corrected new code
+
+The patch system verifies that:
+
+1. the target file exists,
+2. the file is inside the repository,
+3. `.env` cannot be modified,
+4. the old code exists,
+5. the old code occurs exactly once.
+
+Only after these checks does the system modify the file.
+
+### Autonomous Repair Experiment
+
+A controlled bug was introduced where:
+
+```python
+self.email = None
