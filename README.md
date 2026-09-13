@@ -1,8 +1,8 @@
 # AI Software Engineering Agent
 
-An AI-powered software engineering agent for **repository-level code understanding, debugging, automated repair, and verification**.
+An AI-powered software engineering agent for **repository-level code understanding, debugging, automated repair, verification, Git-aware analysis, pull-request analysis, and controlled refactoring evaluation**.
 
-The system combines **Large Language Models (LLMs), Retrieval-Augmented Generation (RAG), semantic code retrieval, ReAct-style reasoning, tool calling, targeted patching, and automated testing** to perform software engineering tasks over an existing codebase.
+The system combines **Large Language Models (LLMs), Retrieval-Augmented Generation (RAG), semantic code retrieval, ReAct-style reasoning, tool calling, targeted patching, Git-aware analysis, and automated testing** to investigate software engineering tasks over an existing codebase.
 
 ---
 
@@ -18,10 +18,14 @@ Instead of generating code without repository context, the agent is designed to:
 * Identify software defects
 * Select and execute development tools
 * Generate targeted code modifications
+* Apply patches to source files
 * Run automated tests
-* Verify whether the repair actually succeeds
+* Verify whether a repair succeeds
+* Inspect Git status and repository changes
+* Analyze existing changes in a pull-request-style workflow
+* Evaluate controlled software refactoring while preserving tested behavior
 
-The project also investigates the **effectiveness of different code retrieval strategies and the limitations of bounded agentic reasoning** through controlled experiments.
+The project investigates both the **capabilities and limitations of LLM-based software engineering agents** through controlled, reproducible experiments.
 
 ---
 
@@ -41,13 +45,13 @@ The project also investigates the **effectiveness of different code retrieval st
                    │ Tool Selection  │
                    └────────┬────────┘
                             │
-              ┌─────────────┼─────────────┐
-              │             │             │
-              ▼             ▼             ▼
-        Repository      Retrieval      Testing
-        Inspection       / RAG        / Pytest
-              │             │             │
-              └─────────────┼─────────────┘
+          ┌─────────────────┼─────────────────┐
+          │                 │                 │
+          ▼                 ▼                 ▼
+    Repository         Retrieval          Testing
+    Inspection          / RAG             / Pytest
+          │                 │                 │
+          └─────────────────┼─────────────────┘
                             │
                             ▼
                     ┌───────────────┐
@@ -64,10 +68,16 @@ The project also investigates the **effectiveness of different code retrieval st
                             │
                       ┌─────┴─────┐
                       │           │
-                   Failed      Passed
+                   Failed       Passed
                       │           │
                       ▼           ▼
                    Iterate    Verified
+```
+
+For Git-aware and pull-request-style tasks, the workflow can additionally inspect:
+
+```text
+Git Status → Git Diff → Changed Files → Relevant Tests → Structured Analysis
 ```
 
 ---
@@ -77,6 +87,8 @@ The project also investigates the **effectiveness of different code retrieval st
 ## Repository Understanding
 
 The agent can inspect repository structure and read relevant source files before modifying code.
+
+This enables software-engineering tasks to be performed with awareness of the surrounding repository rather than treating individual code snippets in isolation.
 
 ## Semantic Retrieval
 
@@ -92,6 +104,8 @@ The embeddings are stored and queried using **ChromaDB**.
 
 Retrieved repository context can be supplied to the language model to support repository-aware reasoning about software engineering tasks.
 
+The project evaluates multiple retrieval strategies rather than assuming that semantic retrieval is always optimal.
+
 ## ReAct Agent
 
 The agent follows an iterative tool-use workflow:
@@ -100,7 +114,13 @@ The agent follows an iterative tool-use workflow:
 Observe → Select Tool → Execute → Observe → Reason → Act
 ```
 
-The agent uses a bounded execution budget to prevent uncontrolled tool execution.
+The agent operates under a bounded execution budget to prevent uncontrolled tool execution.
+
+The current configured maximum is:
+
+```text
+MAX_STEPS = 8
+```
 
 ## Tool Calling
 
@@ -110,26 +130,36 @@ The agent can use tools for:
 * File listing
 * File reading
 * Repository search
+* Semantic retrieval
 * Code modification
-* Patch application
+* Targeted patch application
 * Test execution
+* Git status inspection
+* Git diff inspection
+* Pull-request-style context analysis
 
 ## Targeted Code Modification
 
-The system uses patch-based modification for targeted changes rather than relying exclusively on unrestricted file replacement.
+The system supports patch-based modification for targeted changes rather than relying exclusively on unrestricted file replacement.
+
+The patch workflow uses explicit old/new code regions to reduce unintended modifications.
 
 ## Automated Verification
 
 After modification, the agent executes tests and uses the resulting test status as an external verification signal.
 
+The system does not treat an LLM-generated claim of success as sufficient evidence of a successful repair.
+
 ---
 
-# Research Experiments
+# Research Evaluations
 
-The project currently contains two primary evaluations:
+The project currently contains four major evaluation areas:
 
 1. **Retrieval Evaluation**
 2. **Autonomous Repository Repair Evaluation**
+3. **Git-Aware and Pull-Request Analysis**
+4. **Controlled Software Refactoring Evaluation**
 
 ---
 
@@ -143,13 +173,19 @@ Three repository retrieval strategies were compared using **15 natural-language 
 | Semantic |     **46.67%** |         73.33% |
 | Hybrid   |         40.00% |         60.00% |
 
-### Findings
+## Findings
 
 * Semantic retrieval achieved the strongest **Top-1 accuracy (46.67%)**.
 * Keyword retrieval achieved the strongest **Top-3 accuracy (80.00%)**.
 * The hybrid approach did not outperform the individual retrieval strategies on this evaluation set.
 
-This demonstrates that combining retrieval signals does not automatically improve retrieval quality and motivates future investigation into **code-aware chunking, reranking, and retrieval strategies**.
+This demonstrates that combining retrieval signals does not automatically improve retrieval quality and motivates further investigation into:
+
+* Code-aware chunking
+* Retrieval reranking
+* Function-level retrieval
+* Class-level retrieval
+* Improved hybrid strategies
 
 ---
 
@@ -174,15 +210,13 @@ The benchmark includes different defect categories:
 | Successful repairs  |   **5/6** |
 | Repair success rate | **83.3%** |
 | Failed repairs      |   **1/6** |
-| Maximum agent steps |     **6** |
+| Maximum agent steps |     **8** |
 
 The repair success rate is calculated from the final automated test results after each repair.
 
 ```text
 Repair Success Rate = Successful Repairs / Total Cases × 100
-
                      = 5 / 6 × 100
-
                      = 83.3%
 ```
 
@@ -198,94 +232,138 @@ Detailed execution traces are stored in:
 evaluation/traces/
 ```
 
----
+## Failure Analysis
 
-# Successful Repair Examples
-
-### BUG-002 — Incorrect Calculation
-
-The original implementation returned the price without accounting for quantity.
-
-The agent:
-
-1. Inspected the repository.
-2. Executed the tests.
-3. Read the relevant source file.
-4. Identified the incorrect return expression.
-5. Applied a targeted patch.
-6. Re-ran the tests.
-
-The repaired implementation correctly calculates:
-
-```text
-Total = Price × Quantity
-```
-
-The tests passed after the modification.
-
-### BUG-003 — Incorrect Discount Logic
-
-The original implementation did not correctly apply the expected member discount.
-
-The agent identified the incorrect conditional behavior and modified the member branch.
-
-The complete benchmark test suite passed after the repair.
-
-### BUG-004 — Division Failure
-
-The original implementation raised an exception for a zero denominator, while the benchmark expected the defined safe behavior.
-
-The agent identified the relevant conditional branch and modified the implementation accordingly.
-
-Both tests passed after the repair.
-
-### BUG-005 — Undefined Function Call
-
-The implementation attempted to call an undefined rectangle-area function.
-
-The agent replaced the incorrect function call with the appropriate calculation:
-
-```text
-Area = Length × Width
-```
-
-The test passed after the repair.
-
-### BUG-006 — Incorrect Return Value
-
-The implementation returned a user's name when the required behavior was to return the user's email.
-
-The agent inspected the source and modified the returned attribute.
-
-The test passed after the repair.
-
----
-
-# Failure Analysis
-
-## BUG-001
+### BUG-001
 
 BUG-001 was the only unsuccessful benchmark case.
 
-The agent began repository inspection and identified the relevant fixture, but did not complete the repair within the configured six-step interaction budget.
+The agent began repository inspection and identified the relevant fixture, but did not complete the repair within the bounded interaction budget.
 
-During execution, the agent repeatedly inspected the same file and also attempted to use unsupported arguments with the file-reading tool.
-
-As a result, the agent exhausted its bounded interaction budget before producing a verified repair.
-
-This highlights an important research observation:
+The failure illustrates an important research observation:
 
 > Repository-level repair performance depends not only on code-generation capability, but also on efficient tool selection, tool-interface reliability, and effective management of the agent's interaction budget.
 
-The failure therefore provides a concrete direction for improving the agent rather than simply measuring successful repairs.
+The failed case therefore provides useful evidence about limitations in agentic software-engineering workflows rather than simply representing an unsuccessful test.
+
+---
+
+# 3. Git-Aware Software Engineering
+
+The project was extended beyond isolated repair tasks to include **Git-aware repository analysis**.
+
+The agent can inspect:
+
+* Current Git status
+* Working-tree changes
+* Repository diffs
+* Changed source files
+* Relevant tests
+
+The Git-aware workflow provides repository context for tasks involving existing modifications, refactoring, and pull-request-style analysis.
+
+The relevant tools include:
+
+```text
+git_status
+git_diff
+pr_context
+```
+
+This extension allows the agent to reason about **what has changed in a repository**, rather than only analyzing the repository's current source files.
+
+---
+
+# 4. Pull-Request Analysis
+
+A read-only pull-request-style analysis workflow was evaluated using a controlled repository change.
+
+The workflow included:
+
+1. Inspecting the current repository context
+2. Identifying changed files
+3. Reading the modified source code
+4. Inspecting the associated tests
+5. Analyzing the change
+6. Producing a structured review
+
+The analysis was intentionally **read-only** and did not modify the repository.
+
+This extends the project from autonomous repair toward broader **AI-assisted software engineering workflows**, including code review and change analysis.
+
+---
+
+# 5. Controlled Software Refactoring Evaluation
+
+A separate controlled experiment evaluates whether software structure can be improved while preserving tested behavior.
+
+## Objective
+
+The experiment focuses on removing duplicated order-total calculation logic from a small repository-level example.
+
+The original implementation contained duplicated logic in:
+
+```text
+calculate_order_total()
+calculate_order_total_with_discount()
+```
+
+Both functions independently calculated item totals.
+
+## Refactoring
+
+The duplicated calculation logic was extracted into a shared helper:
+
+```python
+_calculate_items_total(items)
+```
+
+The two public functions were then simplified to reuse this helper.
+
+The external behavior of the public functions was preserved.
+
+## Behavioral Verification
+
+Four tests were used:
+
+1. Normal order-total calculation
+2. Zero-quantity handling
+3. Discount calculation
+4. Zero-discount behavior
+
+Result:
+
+```text
+4 passed in 0.70s
+```
+
+Therefore:
+
+```text
+Behavioral tests passed: 4/4
+```
+
+The experiment provides evidence that the tested behavior was preserved after the structural refactoring.
+
+### Important Research Scope
+
+This is a **controlled refactoring evaluation**, not a claim that the LLM autonomously completed the refactoring.
+
+The experiment is included to evaluate software-engineering workflow and behavioral preservation while keeping the evaluation reproducible and clearly scoped.
+
+Detailed documentation is available at:
+
+```text
+research/automated_refactoring.md
+```
 
 ---
 
 # Agent Execution Traces
 
-The benchmark generates structured execution traces for each task.
+The repair benchmark generates structured execution traces for each task.
 
-Each trace records:
+Each trace records information such as:
 
 * Task ID
 * Agent step number
@@ -318,9 +396,9 @@ The hybrid strategy performed below the individual semantic and keyword approach
 
 This demonstrates why retrieval strategies should be evaluated empirically rather than assuming that combining multiple signals will automatically improve performance.
 
-## 3. Repository inspection can complement imperfect retrieval
+## 3. Repository inspection complements imperfect retrieval
 
-The retrieval experiment produced imperfect results, while the repair agent was still able to successfully repair most benchmark cases.
+The retrieval experiment produced imperfect results, while the repair agent successfully repaired most benchmark cases.
 
 This suggests that repository-level agents can obtain additional context through:
 
@@ -341,17 +419,38 @@ This provides an external verification signal and makes the evaluation more repr
 
 ## 5. Bounded reasoning introduces a measurable trade-off
 
-The six-step execution limit makes the experiment reproducible and prevents uncontrolled tool execution.
+A bounded execution budget improves reproducibility and prevents uncontrolled tool execution.
 
-However, BUG-001 demonstrates that an insufficiently efficient tool-use strategy can cause the agent to fail even when the underlying software defect may be repairable.
+However, unsuccessful benchmark cases demonstrate that inefficient tool use can prevent an agent from completing a repair even when the underlying defect may be repairable.
 
-This motivates future work on **adaptive execution budgets and improved tool selection**.
+This motivates future investigation into:
+
+* Adaptive execution budgets
+* Improved tool selection
+* Tool argument validation
+* More efficient repository exploration
+
+## 6. Structural refactoring can be evaluated through behavioral preservation
+
+The controlled refactoring experiment demonstrates a complementary evaluation principle:
+
+```text
+Existing Structure
+       ↓
+Structural Refactoring
+       ↓
+Behavioral Tests
+       ↓
+4/4 Tests Passed
+```
+
+The important criterion is not simply whether code becomes shorter, but whether the tested externally observable behavior remains correct.
 
 ---
 
 # Limitations
 
-The current results should be interpreted as a **controlled research prototype evaluation** rather than a general measure of autonomous software engineering capability.
+The current results should be interpreted as a **controlled research prototype evaluation**, rather than a general measure of autonomous software engineering capability.
 
 ### Small Evaluation Sets
 
@@ -365,19 +464,25 @@ The benchmark defects are manually constructed and are smaller than many real-wo
 
 The current experiments primarily use small Python repositories rather than large production-scale codebases.
 
-### Fixed Agent Step Budget
+### Bounded Agent Execution
 
 The current agent uses:
 
 ```text
-MAX_STEPS = 6
+MAX_STEPS = 8
 ```
 
-The failure of BUG-001 demonstrates that this constraint can affect repair performance.
+The execution budget can affect whether the agent completes more complex tasks.
 
-### No Large-Scale Real-World Evaluation
+### Controlled Refactoring Experiment
 
-The current system has not yet been evaluated on a large-scale benchmark such as the full SWE-bench dataset.
+The refactoring evaluation uses a small controlled example and a limited behavioral test suite.
+
+Passing the tests does not constitute formal proof of semantic equivalence for every possible input.
+
+### No Large-Scale Real-World Benchmark
+
+The current system has not been evaluated on the full SWE-bench dataset or another large-scale production benchmark.
 
 ---
 
@@ -390,7 +495,7 @@ Potential research directions include:
 * BM25-based retrieval
 * Improved hybrid retrieval
 * Retrieval reranking
-* Adaptive ReAct step budgets
+* Adaptive ReAct execution budgets
 * Improved tool selection
 * Tool argument validation
 * Multi-file software repair
@@ -398,6 +503,8 @@ Potential research directions include:
 * Larger open-source repositories
 * Real GitHub issue evaluation
 * Larger SWE-bench-style experiments
+* Automated refactoring on larger repositories
+* Behavioral and regression-based refactoring evaluation
 
 ---
 
@@ -421,19 +528,35 @@ ai-sw-agent/
 │   ├── benchmark.py
 │   ├── benchmark_runner.py
 │   ├── benchmark_results.json
-│   ├── traces/
-│   └── ...
+│   └── traces/
 │
 ├── research/
 │   ├── retrieval_evaluation.md
 │   ├── prompt_engineering.md
 │   ├── code_generation_and_verification.md
 │   ├── agentic_tool_use.md
-│   └── repository_repair_benchmark.md
+│   ├── repository_repair_benchmark.md
+│   ├── automatic_software_repair.md
+│   ├── repair_evaluation.md
+│   ├── results_and_discussion.md
+│   ├── git_aware_software_engineering.md
+│   ├── pr_analysis.md
+│   └── automated_refactoring.md
 │
 ├── sample_repo/
+│   ├── refactoring_example.py
+│   └── ...
 │
 ├── tests/
+│   ├── test_refactoring_example.py
+│   └── ...
+│
+├── tools/
+│   ├── git_tools.py
+│   ├── git_status.py
+│   ├── pr_context.py
+│   ├── patch_editor.py
+│   └── ...
 │
 ├── vectorstore/
 │
@@ -455,7 +578,8 @@ ai-sw-agent/
 * **ReAct**
 * **Tool Calling**
 * **Pytest**
-* **Git / GitHub**
+* **Git**
+* **GitHub**
 
 ---
 
@@ -468,31 +592,52 @@ The `research/` directory contains technical documentation and experimental anal
 * Code generation and verification
 * Agentic tool use
 * Repository-level software repair
-* Repair benchmarking
+* Automatic software repair
+* Repair evaluation
 * Experimental results and discussion
+* Git-aware software engineering
+* Pull-request analysis
+* Controlled software refactoring
 
-Key research artifact:
+Important research artifacts include:
 
 ```text
 research/repository_repair_benchmark.md
+research/retrieval_evaluation.md
+research/git_aware_software_engineering.md
+research/pr_analysis.md
+research/automated_refactoring.md
 ```
 
 ---
 
 # Reproducibility
 
-The project maintains reproducible benchmark fixtures and automated evaluation scripts.
+The project maintains reproducible benchmark fixtures, experiments, tests, and execution traces.
 
-The repair benchmark can be executed through the evaluation pipeline, which:
+The repair benchmark pipeline:
 
-1. Restores each buggy fixture.
-2. Runs baseline tests.
-3. Executes the repair agent.
-4. Runs post-repair tests.
-5. Records the outcome.
-6. Saves benchmark results and execution traces.
+1. Restores each buggy fixture
+2. Runs baseline tests
+3. Executes the repair agent
+4. Runs post-repair tests
+5. Records the outcome
+6. Saves benchmark results and execution traces
 
-This enables the repair results to be inspected rather than relying only on qualitative demonstrations.
+The controlled refactoring evaluation can be reproduced using:
+
+```powershell
+$env:PYTHONPATH = "."
+pytest tests\test_refactoring_example.py
+```
+
+Expected result:
+
+```text
+4 passed
+```
+
+The repository therefore contains both quantitative benchmark results and supporting execution artifacts rather than relying only on qualitative demonstrations.
 
 ---
 
@@ -500,18 +645,27 @@ This enables the repair results to be inspected rather than relying only on qual
 
 **Research Prototype — Controlled Evaluation Complete**
 
-The core repository-level agent architecture and controlled evaluation pipeline are implemented.
+The project currently includes:
 
-Current research artifacts include:
-
-* Retrieval comparison experiment
-* Autonomous repair benchmark
+* Repository-level LLM agent architecture
+* Retrieval-Augmented Generation
+* Keyword, semantic, and hybrid retrieval evaluation
+* ReAct-style tool use
+* Autonomous repository repair benchmark
+* **83.3% repair success rate on the controlled six-case benchmark**
 * Automated test-based verification
-* Agent execution traces
+* Structured agent execution traces
+* Git status and diff analysis
+* Pull-request-style read-only analysis
+* Controlled software refactoring evaluation
+* **4/4 behavioral tests passing after refactoring**
 * Research documentation
 * Reproducible benchmark fixtures
+* Research paper
 
-Future work focuses on improving tool selection, retrieval quality, adaptive reasoning budgets, and evaluation on larger real-world software engineering benchmarks.
+The project is now considered **feature-complete for the current research scope**.
+
+Future work is identified as research direction rather than part of the current implementation.
 
 ---
 
@@ -519,6 +673,8 @@ Future work focuses on improving tool selection, retrieval quality, adaptive rea
 
 The reported **83.3% repair success rate** is based on a small, controlled benchmark containing six manually constructed software defects.
 
-It should **not** be interpreted as a general measure of autonomous software engineering capability.
+The **4/4 refactoring result** is based on a small controlled example and its associated behavioral tests.
 
-The purpose of this project is to investigate the architecture, behavior, strengths, limitations, and evaluation of LLM-based software engineering agents.
+Neither result should be interpreted as a general measure of autonomous software engineering capability.
+
+The purpose of this project is to investigate the architecture, behavior, strengths, limitations, and evaluation of LLM-based software engineering agents through controlled and reproducible experiments.
