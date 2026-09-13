@@ -11,6 +11,28 @@ FIXTURES_DIR = Path("evaluation/fixtures")
 RESULTS_PATH = Path("evaluation/benchmark_results.json")
 
 
+def reset_fixture(fixture):
+    """Restore a benchmark fixture to its original Git state."""
+
+    result = subprocess.run(
+        [
+            "git",
+            "restore",
+            "--source=HEAD",
+            "--",
+            str(fixture),
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"Failed to reset fixture {fixture}:\n"
+            f"{result.stderr}"
+        )
+
+
 def run_tests(repo_path):
     """Run pytest and return exact test counts."""
 
@@ -28,8 +50,6 @@ def run_tests(repo_path):
     )
 
     output = result.stdout + result.stderr
-
-    import re
 
     passed_match = re.search(r"(\d+)\s+passed", output)
     failed_match = re.search(r"(\d+)\s+failed", output)
@@ -92,6 +112,13 @@ def main():
         print("=" * 60)
 
         # ---------------------------------
+        # Reset fixture
+        # ---------------------------------
+
+        print("\nResetting fixture...")
+        reset_fixture(fixture)
+
+        # ---------------------------------
         # Tests BEFORE repair
         # ---------------------------------
 
@@ -121,7 +148,8 @@ def main():
 
         agent_result = run_repair_agent(
             request,
-            repo_path=str(fixture)
+            repo_path=str(fixture),
+            task_id=bug_id
         )
 
         # ---------------------------------
@@ -186,13 +214,6 @@ def main():
         f"\nResults saved to: "
         f"{RESULTS_PATH}"
     )
-
-print(run_tests(FIXTURES_DIR / "BUG-001"))
-print(run_tests(FIXTURES_DIR / "BUG-002"))
-print(run_tests(FIXTURES_DIR / "BUG-003"))
-print(run_tests(FIXTURES_DIR / "BUG-004"))
-print(run_tests(FIXTURES_DIR / "BUG-005"))
-print(run_tests(FIXTURES_DIR / "BUG-006"))
 
 
 if __name__ == "__main__":

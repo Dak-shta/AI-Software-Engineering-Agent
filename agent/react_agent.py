@@ -1,5 +1,7 @@
+
 import json
 
+from agent.trace_logger import TraceLogger
 from dotenv import load_dotenv
 from groq import Groq
 
@@ -37,7 +39,8 @@ Rules:
 
 def run_repair_agent(
     user_request: str,
-    repo_path: str = "sample_repo"
+    repo_path: str = "sample_repo",
+    task_id: str = "unknown_task"
 ):
     messages = [
         {
@@ -53,6 +56,9 @@ def run_repair_agent(
     tools_used = []
     steps_completed = 0
     final_success = False
+    failure_reason = None
+
+    trace_logger = TraceLogger(task_id)
 
     for step in range(MAX_STEPS):
 
@@ -60,18 +66,48 @@ def run_repair_agent(
 
         print(f"\n========== STEP {step + 1} ==========")
 
-        response = client.chat.completions.create(
-            model="openai/gpt-oss-20b",
-            messages=messages,
-            tools=TOOL_SCHEMAS,
-            tool_choice="auto",
-            temperature=0,
-            max_tokens=500,
-        )
+        # ---------------------------------
+        # LLM CALL
+        # ---------------------------------
+
+        try:
+            response = client.chat.completions.create(
+                model="openai/gpt-oss-20b",
+                messages=messages,
+                tools=TOOL_SCHEMAS,
+                tool_choice="auto",
+                temperature=0,
+                max_tokens=500,
+            )
+
+        except Exception as e:
+            failure_reason = "llm_api_or_tool_call_error"
+
+            print("\nLLM/API ERROR:")
+            print(str(e))
+
+            trace_file = trace_logger.save(
+                final_success=False,
+                total_steps=steps_completed,
+                tools_used=tools_used
+            )
+
+            return {
+                "steps": steps_completed,
+                "tools_used": tools_used,
+                "agent_completed": False,
+                "failure_reason": failure_reason,
+                "error": str(e),
+                "trace_file": str(trace_file)
+            }
 
         message = response.choices[0].message
 
         print("Assistant:", message.content)
+
+        # ---------------------------------
+        # NO TOOL CALL
+        # ---------------------------------
 
         if not message.tool_calls:
 
@@ -83,12 +119,22 @@ def run_repair_agent(
 
         messages.append(message)
 
+        # ---------------------------------
+        # TOOL CALLS
+        # ---------------------------------
+
         for tool_call in message.tool_calls:
 
             tool_name = tool_call.function.name
 
             if tool_name not in tools_used:
                 tools_used.append(tool_name)
+
+            tool_success = False
+
+            # ---------------------------------
+            # Parse tool arguments
+            # ---------------------------------
 
             try:
 
@@ -110,29 +156,79 @@ def run_repair_agent(
                     "error": f"Invalid tool arguments: {e}"
                 }
 
-            else:
+                print("Tool argument error:", observation)
 
-                print("Tool:", tool_name)
-                print("Arguments:", arguments)
+                trace_logger.log_step(
+                    step_number=step + 1,
+                    tool_name=tool_name,
+                    arguments={},
+                    observation=observation,
+                    success=False
+                )
 
-                try:
+                tool_output = json.dumps(
+                    observation,
+                    default=str
+                )
 
-                    observation = execute_tool(
-                        tool_name,
-                        **arguments
-                    )
-
-                except Exception as e:
-
-                    observation = {
-                        "error": str(e)
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": tool_output
                     }
+                )
+
+                continue
+
+            # ---------------------------------
+            # Execute tool
+            # ---------------------------------
+
+            print("Tool:", tool_name)
+            print("Arguments:", arguments)
+
+            try:
+
+                observation = execute_tool(
+                    tool_name,
+                    **arguments
+                )
+
+                tool_success = True
+
+            except Exception as e:
+
+                observation = {
+                    "error": str(e)
+                }
+
+                tool_success = False
 
             print("Observation:", observation)
 
+            # ---------------------------------
+            # Trace logging
+            # ---------------------------------
+
+            trace_logger.log_step(
+                step_number=step + 1,
+                tool_name=tool_name,
+                arguments=arguments,
+                observation=observation,
+                success=tool_success
+            )
+
+            # ---------------------------------
+            # Send tool result back to LLM
+            # ---------------------------------
+
             if isinstance(observation, str):
+
                 tool_output = observation
+
             else:
+
                 tool_output = json.dumps(
                     observation,
                     default=str
@@ -146,8 +242,24 @@ def run_repair_agent(
                 }
             )
 
+    # ---------------------------------
+    # Save trace
+    # ---------------------------------
+
+    if not final_success and failure_reason is None:
+        failure_reason = "step_budget_exhausted"
+
+    trace_file = trace_logger.save(
+        final_success=final_success,
+        total_steps=steps_completed,
+        tools_used=tools_used
+    )
+
     return {
         "steps": steps_completed,
         "tools_used": tools_used,
         "agent_completed": final_success,
+        "failure_reason": failure_reason,
+        "trace_file": str(trace_file)
     }
+

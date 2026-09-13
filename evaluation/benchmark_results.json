@@ -8,19 +8,17 @@
       "returncode": 1
     },
     "tests_after": {
-      "passed": 1,
-      "failed": 0,
-      "returncode": 0
+      "passed": 0,
+      "failed": 1,
+      "returncode": 1
     },
     "tools_used": [
       "list_files",
-      "read_file",
-      "apply_patch",
-      "run_tests"
+      "read_file"
     ],
-    "steps": 5,
-    "agent_completed": true,
-    "success": true
+    "steps": 6,
+    "agent_completed": false,
+    "success": false
   },
   {
     "bug_id": "BUG-002",
@@ -65,7 +63,7 @@
       "apply_patch"
     ],
     "steps": 6,
-    "agent_completed": false,
+    "agent_completed": true,
     "success": true
   },
   {
@@ -110,7 +108,7 @@
       "apply_patch",
       "run_tests"
     ],
-    "steps": 6,
+    "steps": 5,
     "agent_completed": true,
     "success": true
   },
