@@ -1,9 +1,9 @@
-from bug_discount import calculate_discount
+from bug_failure import divide
 
 
-def test_member_discount():
-    assert calculate_discount(101, True) == 91
+def test_divide():
+    assert divide(10, 2) == 5
 
 
-def test_non_member_price():
-    assert calculate_discount(100, False) == 100
+def test_zero_division():
+    assert divide(10, 0) == 0
