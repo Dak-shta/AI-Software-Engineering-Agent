@@ -14,7 +14,7 @@ def calculate_discount(price, is_member):
         The discounted price rounded to the nearest integer.
     """
     if is_member:
-        # Apply a 10% discount. ``int`` truncates towards zero which is
-        # acceptable for the simple test suite.
-        return int(price * 0.9)
-    return price
+        # Apply a 10% discount. ``round`` rounds to the nearest integer.
+        return int(round(price * 0.9))
+    # Return the original price rounded to the nearest integer.
+    return int(round(price))
