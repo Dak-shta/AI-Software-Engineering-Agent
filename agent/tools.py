@@ -1,3 +1,4 @@
+from tools.git_tools import get_git_diff
 from tools.test_runner import run_tests
 from tools.file_reader import read_repository_file
 from tools.vector_store import search_repository
@@ -12,7 +13,8 @@ TOOLS = {
     "search_repository": search_repository,
     "list_files": list_repository_files,
     "apply_change": apply_code_change,
-    "apply_patch": apply_patch
+    "apply_patch": apply_patch,
+    "git_diff": get_git_diff
 }
 
 
@@ -42,6 +44,7 @@ TOOL_SCHEMAS = [
             }
         }
     },
+
     {
         "type": "function",
         "function": {
@@ -64,6 +67,7 @@ TOOL_SCHEMAS = [
             }
         }
     },
+
     {
         "type": "function",
         "function": {
@@ -83,6 +87,7 @@ TOOL_SCHEMAS = [
             }
         }
     },
+
     {
         "type": "function",
         "function": {
@@ -102,6 +107,7 @@ TOOL_SCHEMAS = [
             }
         }
     },
+
     {
         "type": "function",
         "function": {
@@ -128,38 +134,57 @@ TOOL_SCHEMAS = [
             }
         }
     },
+
     {
-    "type": "function",
-    "function": {
-        "name": "apply_patch",
-        "description": (
-            "Safely modify an existing repository file by replacing "
-            "one exact piece of old code with new code. "
-            "Use this instead of replacing the entire file."
-        ),
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "repo_path": {
-                    "type": "string"
+        "type": "function",
+        "function": {
+            "name": "apply_patch",
+            "description": (
+                "Safely modify an existing repository file by replacing "
+                "one exact piece of old code with new code. "
+                "Use this instead of replacing the entire file."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "repo_path": {
+                        "type": "string"
+                    },
+                    "file_path": {
+                        "type": "string"
+                    },
+                    "old_text": {
+                        "type": "string"
+                    },
+                    "new_text": {
+                        "type": "string"
+                    }
                 },
-                "file_path": {
-                    "type": "string"
+                "required": [
+                    "repo_path",
+                    "file_path",
+                    "old_text",
+                    "new_text"
+                ]
+            }
+        }
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "git_diff",
+            "description": "Show the current uncommitted Git changes in the repository.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "repo_path": {
+                        "type": "string",
+                        "description": "Absolute path to the repository."
+                    }
                 },
-                "old_text": {
-                    "type": "string"
-                },
-                "new_text": {
-                    "type": "string"
-                }
-            },
-            "required": [
-                "repo_path",
-                "file_path",
-                "old_text",
-                "new_text"
-            ]
+                "required": ["repo_path"]
+            }
         }
     }
-}
 ]

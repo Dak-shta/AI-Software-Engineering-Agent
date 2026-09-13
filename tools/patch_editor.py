@@ -49,10 +49,10 @@ def apply_patch(
         )
 
     updated_content = content.replace(
-        old_text,
-        new_text,
-        1
-    )
+    old_text,
+    new_text,
+    1
+)
 
     target.write_text(
         updated_content,

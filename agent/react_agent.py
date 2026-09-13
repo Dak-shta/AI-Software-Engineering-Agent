@@ -34,6 +34,7 @@ Rules:
 11. Do not invent files or repository information.
 12. Work step-by-step and use the available tools.
 13. Always use the repository path provided by the caller.
+14. When the task involves refactoring, existing changes, commits, or pull-request-style analysis, inspect git_diff before proposing or applying changes.
 """
 
 
